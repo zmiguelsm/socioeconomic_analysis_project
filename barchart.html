@@ -111,11 +111,37 @@
     <div class="tooltip" style="display: none;"></div>
 
     <script>
-        // Load the CSV dataset
-        d3.csv("cc.csv").then(data => {
-            // Get unique list of countries and attributes from the dataset
+        // Shared metric display names (match linechart)
+        const metricNames = {
+            gdp: "GDP (in Trillions USD)",
+            gdp_capita: "GDP per Capita (in USD)",
+            pop: "Population (in Millions)",
+            poverty: "Poverty Rate (%)",
+            crime: "Crime Rate (per 100,000)",
+            unemployment: "Unemployment Rate (%)"
+        };
+
+        // Load the CSV dataset from final_output.csv with unified attributes
+        d3.csv("final_output.csv", d => ({
+            Year: +d["Year"],
+            Country: d["Country"],
+            gdp: +d["GDP (in Trillions USD)"],
+            gdp_capita: +d["GDP per Capita (in USD)"],
+            pop: +d["Population (in Millions)"],
+            poverty: +d["Poverty Rate (%)"],
+            crime: +d["Crime Rate (per 100,000)"],
+            unemployment: +d["Unemployment Rate (%)"],
+        })).then(data => {
+            // Get unique list of countries and the allowed attributes
             const countries = Array.from(new Set(data.map(d => d.Country)));
-            const attributes = Object.keys(data[0]).filter(attr => attr !== 'Country' && attr !== 'Year');
+            const attributes = [
+                'gdp',
+                'gdp_capita',
+                'pop',
+                'poverty',
+                'crime',
+                'unemployment'
+            ];
 
             // Populate the country dropdowns
             const countrySelect1 = d3.select("#country-select-1");
@@ -128,20 +154,25 @@
             // Populate the attribute dropdown
             const attributeSelect = d3.select("#attribute-select");
             attributes.forEach(attr => {
-                attributeSelect.append("option").text(attr).attr("value", attr);
+                attributeSelect.append("option").text(metricNames[attr]).attr("value", attr);
             });
 
             // Set default selections
             countrySelect1.property("value", countries[0]);
             countrySelect2.property("value", countries[1]);
-            attributeSelect.property("value", attributes[0]);
+            attributeSelect.property("value", 'gdp');
+
+            // Sync the year label with the current slider value
+            d3.select("#year-label").text(d3.select("#year-slider").property("value"));
 
             // Draw the initial bar chart based on the default selections
             updateBarChart(data);
 
             // Update the bar chart on any selection change
-            d3.selectAll("#country-select-1, #country-select-2, #attribute-select, #year-slider").on("change", () => {
-                d3.select("#year-label").text(d3.select("#year-slider").property("value")); // Update year label
+            d3.selectAll("#country-select-1, #country-select-2, #attribute-select").on("change", () => updateBarChart(data));
+            // Make the slider responsive to input for smoother updates
+            d3.select("#year-slider").on("input", () => {
+                d3.select("#year-label").text(d3.select("#year-slider").property("value"));
                 updateBarChart(data);
             });
         });
@@ -193,7 +224,7 @@
                         .style("display", "block")
                         .style("left", event.pageX + 10 + "px")
                         .style("top", event.pageY - 25 + "px")
-                        .html(`${d.Country}<br>${attribute}: ${+d[attribute]}`);
+                    .html(`${d.Country}<br>${metricNames[attribute] || attribute}: ${+d[attribute]}`);
                 })
                 .on("mouseout", () => {
                     d3.select(".tooltip").style("display", "none");
@@ -222,7 +253,7 @@
                 .attr("transform", `translate(${margin.left / 2}, ${(chartHeight + margin.top) / 2}) rotate(-90)`)
                 .style("font-size", "14px")
                 .style("fill", "#333")
-                .text(attribute); // Dynamically set the label to the selected attribute
+                .text(metricNames[attribute] || attribute); // Dynamically set the label to the selected attribute
         }
     </script>
 </body>

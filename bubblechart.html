@@ -299,17 +299,21 @@
         <div id="dropdownContainer">
             <select id="X-axis" name="X-axis">
                 <option value="">Select X-axis</option>
-                <option value="GDP_Trillions_USD">GDP_Trillions_USD</option>
-                <option value="Life_Expectancy">Life_Expectancy</option>
-                <option value="Literacy_Rate">Literacy_Rate</option>
-                <option value="Poverty_rate">Poverty_rate</option>
+                <option value="gdp">GDP (in Trillions USD)</option>
+                <option value="gdp_capita">GDP per Capita (in USD)</option>
+                <option value="pop">Population (in Millions)</option>
+                <option value="poverty">Poverty Rate (%)</option>
+                <option value="crime">Crime Rate (per 100,000)</option>
+                <option value="unemployment">Unemployment Rate (%)</option>
             </select>
             <select id="Y-axis" name="Y-axis">
                 <option value="">Select Y-axis</option>
-                <option value="GDP_Trillions_USD">GDP_Trillions_USD</option>
-                <option value="Life_Expectancy">Life_Expectancy</option>
-                <option value="Literacy_Rate">Literacy_Rate</option>
-                <option value="Poverty_rate">Poverty_rate</option>
+                <option value="gdp">GDP (in Trillions USD)</option>
+                <option value="gdp_capita">GDP per Capita (in USD)</option>
+                <option value="pop">Population (in Millions)</option>
+                <option value="poverty">Poverty Rate (%)</option>
+                <option value="crime">Crime Rate (per 100,000)</option>
+                <option value="unemployment">Unemployment Rate (%)</option>
             </select>
             <select id="Country" name="Country">
                 <option value="">Select Countries</option>
@@ -347,17 +351,25 @@
     <script>
 
         // load csv
-        d3.csv("cc.csv", d=> ({
-                Year: Number(d.Year),
-                Country: d.Country,
-                Population: Number(d['Population (in Millions)']),
-                GDP_Trillions_USD: Number(d['GDP (in Trillions USD)']),
-                Life_Expectancy: Number(d['Life Expectancy (Years)']),
-                Literacy_Rate: Number(d['Literacy Rate (%)']),
-                Poverty_rate: Number(d['Poverty Rate (%)']),
+        const metricNames = {
+            gdp: "GDP (in Trillions USD)",
+            gdp_capita: "GDP per Capita (in USD)",
+            pop: "Population (in Millions)",
+            poverty: "Poverty Rate (%)",
+            crime: "Crime Rate (per 100,000)",
+            unemployment: "Unemployment Rate (%)"
+        };
 
-        })
-        ).then(generateBubbleChart);
+        d3.csv("final_output.csv", d => ({
+            year: +d["Year"],
+            Country: d["Country"],
+            gdp: +d["GDP (in Trillions USD)"],
+            gdp_capita: +d["GDP per Capita (in USD)"],
+            pop: +d["Population (in Millions)"],
+            poverty: +d["Poverty Rate (%)"],
+            crime: +d["Crime Rate (per 100,000)"],
+            unemployment: +d["Unemployment Rate (%)"],
+        })).then(generateBubbleChart);
 
         function generateBubbleChart(data){
             // Set the dimension of container
@@ -456,10 +468,9 @@
                 }
 
             // Filter data for the selected year
-
             const filteredData = data.filter(
-                    d => d.Year === year && selectedCountries.includes(d.Country)
-                );
+                d => d.year === year && selectedCountries.includes(d.Country)
+            );
 
     // Scales
     xScale.domain(globalXDomain).nice();
@@ -469,8 +480,8 @@
     xAxisGroup.call(d3.axisBottom(xScale));
     yAxisGroup.call(d3.axisLeft(yScale));
 
-    svg.select(".x-label").text(xMetric);
-    svg.select(".y-label").text(yMetric);
+    svg.select(".x-label").text(metricNames[xMetric] || xMetric);
+    svg.select(".y-label").text(metricNames[yMetric] || yMetric);
 
     // Bind filtered data to bubbles
     const bubbles = svg.selectAll(".bubbles").data(filteredData, d => d.Country);
@@ -501,7 +512,7 @@
             const xMetric = document.getElementById("X-axis").value; // Fetch dynamically
             const yMetric = document.getElementById("Y-axis").value; 
             tooltip.style("opacity", 1)
-            .html(`Country: ${d.Country}<br>Population: ${d.Population}<br>
+            .html(`Country: ${d.Country}<br>Population: ${d.pop}<br>
                 ${xMetric}: ${+d[xMetric]}<br>${yMetric}: ${+d[yMetric]}`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 20) + "px");
@@ -515,14 +526,14 @@
         })
         .transition() // Transition for new bubbles
         .duration(1000)
-        .attr("r", d => Math.sqrt(d.Population)); //radius based on population
+        .attr("r", d => Math.sqrt(d.pop)); //radius based on population
 
     // Update selection: Adjust existing bubbles
     bubbles.transition() // Smooth transition for existing bubbles
         .duration(1000)
         .attr("cx", d => xScale(d[xMetric]))
         .attr("cy", d => yScale(d[yMetric]))
-        .attr("r", d => Math.sqrt(d.Population));
+        .attr("r", d => Math.sqrt(d.pop));
 
     // Exit selection: Remove bubbles not in the current data
     bubbles.exit().transition()
@@ -599,8 +610,8 @@
             document.getElementById("X-axis").addEventListener("change", onDropdownChange);
             document.getElementById("Y-axis").addEventListener("change", onDropdownChange);
 
-            document.getElementById("X-axis").value = "GDP_Trillions_USD";
-            document.getElementById("Y-axis").value = "Life_Expectancy";
+            document.getElementById("X-axis").value = "gdp";
+            document.getElementById("Y-axis").value = "gdp_capita";
 
             document.getElementById("Country").value = "all";
 

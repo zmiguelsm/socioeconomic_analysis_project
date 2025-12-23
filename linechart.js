@@ -7,7 +7,7 @@ d3.csv("final_output.csv", d => {
         gdp: +d["GDP (in Trillions USD)"],
         gdp_capita: +d["GDP per Capita (in USD)"],
         pop: +d["Population (in Millions)"],
-        year: new Date(d["Year"]),
+        year: new Date(+d["Year"], 0, 1),
         country: d["Country"],
         poverty: +d["Poverty Rate (%)"],
         crime: +d["Crime Rate (per 100,000)"],
